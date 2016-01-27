@@ -35,71 +35,70 @@ DEFINE_string(linear_program, "", "Linear program input");
 Scene scene;
 AssetMap asset;
 
-int Frame(LFL::Window *W, unsigned clicks, unsigned mic_samples, bool cam_sample, int flag) {
+int Frame(LFL::Window *W, unsigned clicks, int flag) {
 #ifdef LFL_CLING
-    char buf[8192]={0}, result[512]={0}, *space;
-    if (!FGets(buf, sizeof(buf))) return false;
-    // cling::Interpreter::getSelf()->process(buf);
+  char buf[8192]={0}, result[512]={0}, *space;
+  if (!FGets(buf, sizeof(buf))) return false;
+  // cling::Interpreter::getSelf()->process(buf);
 #else
-    app->shell.FGets();
+  app->shell.FGets();
 #endif
-    if (!FLAGS_visualize) return 0;
-    scene.Draw(&asset.vec);
-    screen->gd->DrawMode(DrawMode::_2D);
-    screen->DrawDialogs();
-    return 0;
+  if (!FLAGS_visualize) return 0;
+  scene.Draw(&asset.vec);
+  screen->gd->DrawMode(DrawMode::_2D);
+  screen->DrawDialogs();
+  return 0;
 }
 
 }; // namespace LFL
 using namespace LFL;
 
 extern "C" int main(int argc, const char *argv[]) {
+  app->logfilename = StrCat(LFAppDownloadDir(), "calculator.txt");
+  screen->frame_cb = Frame;
+  screen->width = 420;
+  screen->height = 380;
+  screen->caption = "Calculator";
 
-    app->logfilename = StrCat(LFAppDownloadDir(), "calculator.txt");
-    screen->frame_cb = Frame;
-    screen->width = 420;
-    screen->height = 380;
-    screen->caption = "Calculator";
+  if (app->Create(argc, argv, __FILE__)) { app->Free(); return -1; }
 
-    if (app->Create(argc, argv, __FILE__)) { app->Free(); return -1; }
+  FLAGS_lfapp_audio = false;
+  FLAGS_lfapp_video = FLAGS_visualize;
 
-    FLAGS_lfapp_audio = false;
-    FLAGS_lfapp_video = FLAGS_visualize;
+  if (app->Init()) { app->Free(); return -1; }
 
-    if (app->Init()) { app->Free(); return -1; }
+  app->shell.assets = &asset;
+  // asset.Add(Asset(name, texture,     scale, translate, rotate, geometry        0, 0, 0));
+  asset.Add(Asset("axis",  "",          0,     0,         0,      0,              0, 0, 0, Asset::DrawCB(bind(&glAxis, _1, _2))));
+  asset.Add(Asset("grid",  "",          0,     0,         0,      Grid::Grid3D(), 0, 0, 0));
+  asset.Load();
 
-    app->shell.assets = &asset;
-    // asset.Add(Asset(name, texture,     scale, translate, rotate, geometry        0, 0, 0));
-    asset.Add(Asset("axis",  "",          0,     0,         0,      0,              0, 0, 0, Asset::DrawCB(bind(&glAxis, _1, _2))));
-    asset.Add(Asset("grid",  "",          0,     0,         0,      Grid::Grid3D(), 0, 0, 0));
-    asset.Load();
+  BindMap *binds = screen->binds = new BindMap();
+  // binds->Add(Bind(key,         callback));
+  binds->Add(Bind(Key::Backquote, Bind::CB    (bind(&Shell::console,    app->shell, vector<string>()))));
+  binds->Add(Bind(Key::Quote,     Bind::CB    (bind(&Shell::console,    app->shell, vector<string>()))));
+  binds->Add(Bind(Key::Escape,    Bind::CB    (bind(&Shell::quit,       app->shell, vector<string>()))));
+  binds->Add(Bind(Key::Return,    Bind::CB    (bind(&Shell::grabmode,   app->shell, vector<string>()))));
+  binds->Add(Bind(Key::LeftShift, Bind::TimeCB(bind(&Entity::RollLeft,  screen->cam, _1))));
+  binds->Add(Bind(Key::Space,     Bind::TimeCB(bind(&Entity::RollRight, screen->cam, _1))));
+  binds->Add(Bind('w',            Bind::TimeCB(bind(&Entity::MoveFwd,   screen->cam, _1))));
+  binds->Add(Bind('s',            Bind::TimeCB(bind(&Entity::MoveRev,   screen->cam, _1))));
+  binds->Add(Bind('a',            Bind::TimeCB(bind(&Entity::MoveLeft,  screen->cam, _1))));
+  binds->Add(Bind('d',            Bind::TimeCB(bind(&Entity::MoveRight, screen->cam, _1))));
+  binds->Add(Bind('q',            Bind::TimeCB(bind(&Entity::MoveDown,  screen->cam, _1))));
+  binds->Add(Bind('e',            Bind::TimeCB(bind(&Entity::MoveUp,    screen->cam, _1))));
 
-    BindMap *binds = screen->binds = new BindMap();
-    // binds->Add(Bind(key,         callback));
-    binds->Add(Bind(Key::Backquote, Bind::CB    (bind(&Shell::console,    app->shell, vector<string>()))));
-    binds->Add(Bind(Key::Quote,     Bind::CB    (bind(&Shell::console,    app->shell, vector<string>()))));
-    binds->Add(Bind(Key::Escape,    Bind::CB    (bind(&Shell::quit,       app->shell, vector<string>()))));
-    binds->Add(Bind(Key::Return,    Bind::CB    (bind(&Shell::grabmode,   app->shell, vector<string>()))));
-    binds->Add(Bind(Key::LeftShift, Bind::TimeCB(bind(&Entity::RollLeft,  screen->cam, _1))));
-    binds->Add(Bind(Key::Space,     Bind::TimeCB(bind(&Entity::RollRight, screen->cam, _1))));
-    binds->Add(Bind('w',            Bind::TimeCB(bind(&Entity::MoveFwd,   screen->cam, _1))));
-    binds->Add(Bind('s',            Bind::TimeCB(bind(&Entity::MoveRev,   screen->cam, _1))));
-    binds->Add(Bind('a',            Bind::TimeCB(bind(&Entity::MoveLeft,  screen->cam, _1))));
-    binds->Add(Bind('d',            Bind::TimeCB(bind(&Entity::MoveRight, screen->cam, _1))));
-    binds->Add(Bind('q',            Bind::TimeCB(bind(&Entity::MoveDown,  screen->cam, _1))));
-    binds->Add(Bind('e',            Bind::TimeCB(bind(&Entity::MoveUp,    screen->cam, _1))));
+  scene.Add(new Entity("axis",  asset("axis")));
+  scene.Add(new Entity("grid",  asset("grid")));
 
-    scene.Add(new Entity("axis",  asset("axis")));
-    scene.Add(new Entity("grid",  asset("grid")));
+  // cling::Interpreter interpreter(argc, argv, "/Users/p/cling");
 
-    // cling::Interpreter interpreter(argc, argv, "/Users/p/cling");
+  if (!FLAGS_linear_program.empty()) {
+    LocalFile lf(FLAGS_linear_program, "r");
+    LinearProgram::Solve(&lf, 1);
+    return 0;
+  }
 
-    if (!FLAGS_linear_program.empty()) {
-        LocalFile lf(FLAGS_linear_program, "r");
-        LinearProgram::Solve(&lf, 1);
-        return 0;
-    }
-
-    // start our engine
-    return app->Main();
+  // start our engine
+  return app->Main();
 }
