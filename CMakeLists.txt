@@ -1,28 +1,8 @@
 # $Id: CMakeLists.txt 1334 2014-11-28 09:14:21Z justin $
 
-set(LFL_PNG 1)
-set(LFL_CLING 1)
-set(LFL_OPENCV 1)
-set(LFL_LFLINPUT 1)
-set(LFL_LFLVIDEO 1)
-
-if(LFL_ANDROID)
- set(LFL_GLES2 1)
-elseif(LFL_IPHONE)
- set(LFL_GLES2 1)
-else(LFL_ANDROID)
- set(LFL_GLOG 1)
-endif(LFL_ANDROID)
-
-lfl_project(calculator)
-add_subdirectory(../core/lfapp ${CMAKE_CURRENT_BINARY_DIR}/lfapp_obj)
-add_definitions(${LFAPP_DEF})
-include_directories(${LFAPP_INCLUDE})
-
-if(LFL_ANDROID)
-add_library(calculator calculator.cpp)
-else(LFL_ANDROID)
 add_executable(calculator calculator.cpp)
-target_link_libraries(calculator ${LFAPP_LIB})
-endif(LFL_ANDROID)
+target_link_libraries(calculator ${LFL_APP_LIB} ${GTEST_LIB} app_null_os app_null_framework app_null_graphics
+                      app_null_audio app_null_camera app_opencv_matrix app_null_fft app_simple_loader
+                      app_simple_resampler app_iconv_convert app_regexp_regex app_libsregex_sregex
+                      app_libpng_png app_null_jpeg app_null_gif app_libcss_css app_null_ttf app_null_ssl)
 
