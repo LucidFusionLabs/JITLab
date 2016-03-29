@@ -60,12 +60,11 @@ using namespace LFL;
 extern "C" void MyAppCreate() {
   app = new Application();
   screen = new Window();
-  app->logfilename = StrCat(LFAppDownloadDir(), "calculator.txt");
+  app->name = "Calculator";
   screen->shell = make_unique<Shell>(nullptr, nullptr, nullptr);
   screen->frame_cb = Frame;
   screen->width = 420;
   screen->height = 380;
-  screen->caption = "Calculator";
 }
 
 extern "C" int MyAppMain(int argc, const char* const* argv) {
