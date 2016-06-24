@@ -57,18 +57,18 @@ int Frame(LFL::Window *W, unsigned clicks, int flag) {
 }; // namespace LFL
 using namespace LFL;
 
-extern "C" void MyAppCreate() {
-  app = new Application();
+extern "C" void MyAppCreate(int argc, const char* const* argv) {
+  app = new Application(argc, argv);
   screen = new Window();
   app->name = "Calculator";
-  screen->shell = make_unique<Shell>(nullptr, nullptr, nullptr);
+  screen->shell = make_unique<Shell>();
   screen->frame_cb = Frame;
   screen->width = 420;
   screen->height = 380;
 }
 
-extern "C" int MyAppMain(int argc, const char* const* argv) {
-  if (app->Create(argc, argv, __FILE__)) return -1;
+extern "C" int MyAppMain() {
+  if (app->Create(__FILE__)) return -1;
   if (app->Init()) return -1;
   screen->target_fps = 1;
   my_app = new MyAppState();
