@@ -59,18 +59,18 @@ using namespace LFL;
 
 extern "C" void MyAppCreate(int argc, const char* const* argv) {
   app = new Application(argc, argv);
-  screen = new Window();
   app->name = "Calculator";
-  screen->shell = make_unique<Shell>();
-  screen->frame_cb = Frame;
-  screen->width = 420;
-  screen->height = 380;
+  app->focused = new Window();
+  app->focused->shell = make_unique<Shell>(app->focused);
+  app->focused->frame_cb = Frame;
+  app->focused->width = 420;
+  app->focused->height = 380;
 }
 
 extern "C" int MyAppMain() {
   if (app->Create(__FILE__)) return -1;
   if (app->Init()) return -1;
-  screen->target_fps = 1;
+  app->focused->target_fps = 1;
   my_app = new MyAppState();
 
   if (!FLAGS_linear_program.empty()) {
@@ -79,6 +79,6 @@ extern "C" int MyAppMain() {
     return 0;
   }
 
-  app->StartNewWindow(screen);
+  app->StartNewWindow(app->focused);
   return app->Main();
 }
