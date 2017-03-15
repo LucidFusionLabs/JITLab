@@ -49,7 +49,7 @@ int Frame(LFL::Window *W, unsigned clicks, int flag) {
   if (!FGets(buf, sizeof(buf))) return false;
   my_app->interp.process(buf);
 #else
-  screen->shell->FGets();
+  app->focused->shell->FGets();
 #endif
   return 0;
 }
@@ -60,7 +60,7 @@ using namespace LFL;
 extern "C" void MyAppCreate(int argc, const char* const* argv) {
   app = new Application(argc, argv);
   app->name = "Calculator";
-  app->focused = new Window();
+  app->focused = Window::Create();
   app->focused->shell = make_unique<Shell>(app->focused);
   app->focused->frame_cb = Frame;
   app->focused->width = 420;
