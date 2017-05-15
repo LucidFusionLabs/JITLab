@@ -1,5 +1,6 @@
 # $Id: CMakeLists.txt 1334 2014-11-28 09:14:21Z justin $
 
+if(LFL_LIBCLING)
 lfl_add_target(calculator EXECUTABLE SOURCES calculator.cpp
                COMPILE_DEFINITIONS -DLFL_CLING
                INCLUDE_DIRECTORIES ${LIBCLING_INCLUDE}
@@ -8,3 +9,4 @@ lfl_add_target(calculator EXECUTABLE SOURCES calculator.cpp
                app_simple_resampler app_iconv_convert app_stdregex_regex app_null_sregex
                app_libpng_png app_null_jpeg app_null_gif app_null_ogg app_libcss_css app_null_ttf
                app_null_ssl app_null_js app_null_tu ${LIBCLING_LIB} ${LFL_APP_OS})
+endif()
