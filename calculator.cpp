@@ -1,5 +1,5 @@
 /*
- * $Id: calculator.cpp 1334 2014-11-28 09:14:21Z justin $
+ * $Id$
  * Copyright (C) 2009 Lucid Fusion Labs
 
  * This program is free software: you can redistribute it and/or modify
@@ -31,47 +31,50 @@ namespace LFL {
 DEFINE_string(linear_program, "", "Linear program input");
 DEFINE_string(llvm_dir, "../../../cling-build/inst", "LLVM dir");
 DEFINE_string(lfl_dir, "../..", "LFL dir");
+
 static const char* cling_argv[] = { "cling", nullptr };
 
-struct MyAppState {
+struct MyApp : public Application {
 #ifdef LFL_CLING
   // llvm::llvm_shutdown_obj shutdownTrigger;
   cling::Interpreter interp;
-  MyAppState() : interp(1, cling_argv, FLAGS_llvm_dir.c_str()) {
+  MyApp(int ac, const char* const* av) : Application(ac, av), interp(1, cling_argv, FLAGS_llvm_dir.c_str()) {
     interp.AddIncludePath(FLAGS_lfl_dir.c_str());
   }
-#endif
-} *my_app;
-
-int Frame(LFL::Window *W, unsigned clicks, int flag) {
-#ifdef LFL_CLING
-  char buf[8192]={0}, result[512]={0}, *space;
-  if (!FGets(buf, sizeof(buf))) return false;
-  my_app->interp.process(buf);
 #else
-  app->focused->shell->FGets();
+  using Application::Application;
 #endif
-  return 0;
-}
+
+  int Frame(Window *W, unsigned clicks, int flag) {
+#ifdef LFL_CLING
+    char buf[8192]={0}, result[512]={0}, *space;
+    if (!FGets(buf, sizeof(buf))) return false;
+    interp.process(buf);
+#else
+    focused->shell->FGets();
+#endif
+    return 0;
+  }
+} *app;
 
 }; // namespace LFL
 using namespace LFL;
 
-extern "C" void MyAppCreate(int argc, const char* const* argv) {
-  app = new Application(argc, argv);
-  app->name = "Calculator";
+extern "C" LFApp *MyAppCreate(int argc, const char* const* argv) {
+  app = make_unique<MyApp>(argc, argv);
+  app->name = "JITLab";
   app->focused = Window::Create();
   app->focused->shell = make_unique<Shell>(app->focused);
-  app->focused->frame_cb = Frame;
-  app->focused->width = 420;
-  app->focused->height = 380;
+  app->focused->frame_cb = bind(&MyApp::Frame, app, _1, _2, _3);
+  app->focused->gl_w = 420;
+  app->focused->gl_h = 380;
+  return app;
 }
 
 extern "C" int MyAppMain() {
   if (app->Create(__FILE__)) return -1;
   if (app->Init()) return -1;
   app->focused->target_fps = 1;
-  my_app = new MyAppState();
 
   if (!FLAGS_linear_program.empty()) {
     LocalFile lf(FLAGS_linear_program, "r");
